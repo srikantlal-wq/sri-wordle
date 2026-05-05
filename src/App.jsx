@@ -115,11 +115,11 @@ const App = () => {
         setGuesses([]);
         setGameStatus('playing');
       }
-    }, (err) => console.error(err));
+    }, (err) => console.error("Firebase Error (Game):", err));
 
     const unsubStats = onSnapshot(statsRef, (snap) => {
       if (snap.exists()) setStats(snap.data());
-    }, (err) => console.error(err));
+    }, (err) => console.error("Firebase Error (Stats):", err));
 
     return () => { unsubGame(); unsubStats(); };
   }, [user, gameMode, gameNumber, solution]);
@@ -251,6 +251,35 @@ const App = () => {
     return 'bg-gray-900 border-2 border-gray-700';
   };
 
+  const copyToClipboard = (text) => {
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      // Ensure the textarea is off-screen but still part of the DOM
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        showToast("Copied results!");
+      } else {
+        throw new Error("Copy failed");
+      }
+    } catch (err) {
+      console.error("Clipboard Fallback Error:", err);
+      // Final attempt if direct clipboard API exists and we're in a secure context
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => showToast("Copied!")).catch(() => showToast("Share failed"));
+      } else {
+        showToast("Couldn't copy results");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center">
       <header className="w-full max-w-lg flex items-center justify-between p-4 border-b border-gray-800">
@@ -363,8 +392,8 @@ const App = () => {
                 <div className="flex gap-4 w-full">
                     <button onClick={() => {
                         const grid = guesses.map(g => getLetterStatus(g, solution).map(s => s === 'correct' ? '🟩' : (s === 'present' ? '🟨' : '⬛')).join('')).join('\n');
-                        const text = `*SL* Wordle ${gameMode === 'daily' ? gameNumber : 'Practice'} ${gameStatus === 'won' ? guesses.length : 'X'}/6\n\n${grid}`;
-                        navigator.clipboard.writeText(text).then(() => showToast("Copied!"));
+                        const shareText = `*SL* Wordle ${gameMode === 'daily' ? gameNumber : 'Practice'} ${gameStatus === 'won' ? guesses.length : 'X'}/6\n\n${grid}`;
+                        copyToClipboard(shareText);
                     }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 rounded flex items-center justify-center gap-2 font-bold py-3 transition-colors uppercase text-sm">
                     Share <Share2 className="w-4 h-4" />
                     </button>
