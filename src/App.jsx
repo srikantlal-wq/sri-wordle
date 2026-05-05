@@ -4,6 +4,22 @@ import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged }
 import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from 'firebase/firestore';
 import { Settings, BarChart2, Share2, X, Sun, Moon, Info } from 'lucide-react';
 
+// --- Manual Environment Overrides ---
+if (typeof __firebase_config === 'undefined') {
+  window.__firebase_config = JSON.stringify({
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "your-app.firebaseapp.com",
+    projectId: "your-app-id",
+    storageBucket: "your-app.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+  });
+}
+
+if (typeof __app_id === 'undefined') {
+  window.__app_id = 'my-custom-wordle';
+}
+
 // --- Firebase Configuration ---
 const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
