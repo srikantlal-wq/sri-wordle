@@ -38,14 +38,14 @@ const App = () => {
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameStatus, setGameStatus] = useState('playing');
   const [toast, setToast] = useState(null);
-  const [shakeRow, setShakeRow] = useState(false);
   const [gameMode, setGameMode] = useState('daily');
   const [gameNumber, setGameNumber] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  const [isHardMode, setIsHardMode] = useState(false);
   const [isHighContrast, setIsHighContrast] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
   const [stats, setStats] = useState({
     gamesPlayed: 0,
     gamesWon: 0,
@@ -54,7 +54,6 @@ const App = () => {
     guessDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
   });
 
-  // Safe solution calculation
   const getDailyInfo = useCallback(() => {
     try {
         const now = new Date();
@@ -70,7 +69,6 @@ const App = () => {
     }
   }, []);
 
-  // Initialize Auth
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -82,10 +80,12 @@ const App = () => {
       } catch (e) { console.error("Auth failed", e); }
     };
     initAuth();
-    return onAuthStateChanged(auth, setUser);
+    return onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setIsInitialized(true);
+    });
   }, []);
 
-  // Set Solution
   useEffect(() => {
     if (gameMode === 'daily') {
       const { word, number } = getDailyInfo();
@@ -96,9 +96,8 @@ const App = () => {
     }
   }, [gameMode, getDailyInfo, solution]);
 
-  // Firestore Listeners
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isInitialized) return;
     const gameId = gameMode === 'daily' ? `daily-${gameNumber}` : 'practice-mode';
     const gameRef = doc(db, 'artifacts', appId, 'users', user.uid, 'games', gameId);
     const statsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'stats');
@@ -112,21 +111,28 @@ const App = () => {
             if (data.solution && gameMode !== 'daily') setSolution(data.solution);
         }
       }
-    }, (err) => console.warn("Game data fetch fail", err));
+    }, (err) => console.warn("Game fetch fail", err));
 
     const unsubStats = onSnapshot(statsRef, (snap) => {
-      if (snap.exists()) setStats(snap.data());
+      if (snap.exists()) {
+          const fetched = snap.data();
+          setStats(prev => ({
+              ...prev,
+              ...fetched,
+              guessDistribution: { ...prev.guessDistribution, ...(fetched.guessDistribution || {}) }
+          }));
+      }
     }, (err) => console.warn("Stats fetch fail", err));
 
     return () => { unsubGame(); unsubStats(); };
-  }, [user, gameMode, gameNumber]);
+  }, [user, gameMode, gameNumber, isInitialized]);
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 2000);
+    setTimeout(() => setToast(null), 3000);
   };
 
-  const getLetterStatus = (guess, sol) => {
+  const getLetterStatus = useCallback((guess, sol) => {
     if (!guess || !sol) return Array(5).fill('absent');
     const result = Array(5).fill('absent');
     const solArr = sol.split('');
@@ -145,32 +151,37 @@ const App = () => {
       }
     });
     return result;
-  };
+  }, []);
 
   const saveStats = async (won, numGuesses) => {
     if (!user || gameMode !== 'daily') return;
     try {
-        const newStats = { ...stats };
-        newStats.gamesPlayed += 1;
+        const currentStats = stats || { gamesPlayed: 0, gamesWon: 0, currentStreak: 0, maxStreak: 0, guessDistribution: {1:0,2:0,3:0,4:0,5:0,6:0} };
+        const newStats = { 
+            gamesPlayed: (currentStats.gamesPlayed || 0) + 1,
+            gamesWon: (currentStats.gamesWon || 0) + (won ? 1 : 0),
+            currentStreak: won ? (currentStats.currentStreak || 0) + 1 : 0,
+            maxStreak: currentStats.maxStreak || 0,
+            guessDistribution: { ...(currentStats.guessDistribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }) }
+        };
+        
         if (won) {
-          newStats.gamesWon += 1;
-          newStats.currentStreak += 1;
-          newStats.maxStreak = Math.max(newStats.maxStreak, newStats.currentStreak);
-          newStats.guessDistribution = { ...newStats.guessDistribution };
-          newStats.guessDistribution[numGuesses] = (newStats.guessDistribution[numGuesses] || 0) + 1;
-        } else {
-          newStats.currentStreak = 0;
+            newStats.maxStreak = Math.max(newStats.maxStreak, newStats.currentStreak);
+            newStats.guessDistribution[numGuesses] = (newStats.guessDistribution[numGuesses] || 0) + 1;
         }
+
         await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'stats'), newStats);
     } catch (e) { console.error("Stats save error", e); }
   };
 
   const onKeyPress = useCallback((key) => {
     if (gameStatus !== 'playing') return;
+    
     if (key === 'BACKSPACE') {
       setCurrentGuess(p => p.slice(0, -1));
       return;
     }
+    
     if (key === 'ENTER') {
       if (currentGuess.length < 5) return showToast("Not enough letters");
       
@@ -179,24 +190,31 @@ const App = () => {
       if (currentGuess === solution) status = 'won';
       else if (newGuesses.length === 6) status = 'lost';
 
+      // Atomic State Update
       setGuesses(newGuesses);
       setGameStatus(status);
       setCurrentGuess('');
 
-      // Async persistence
+      // Database sync
       if (user) {
           const gameId = gameMode === 'daily' ? `daily-${gameNumber}` : 'practice-mode';
           setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'games', gameId), {
-            guesses: newGuesses, status: status, solution: solution, mode: gameMode
-          }).catch(e => console.error("Save error", e));
+            guesses: newGuesses, 
+            status: status, 
+            solution: solution, 
+            mode: gameMode,
+            lastUpdated: Date.now()
+          }).catch(e => console.error("DB error", e));
       }
 
       if (status !== 'playing') {
         saveStats(status === 'won', newGuesses.length);
-        setTimeout(() => setShowStats(true), 800);
+        // Ensure UI transitions are smooth before modal
+        setTimeout(() => setShowStats(true), 1500);
       }
       return;
     }
+
     if (/^[A-Z]$/.test(key) && currentGuess.length < 5) {
       setCurrentGuess(p => p + key);
     }
@@ -204,6 +222,7 @@ const App = () => {
 
   const keyboardColors = useMemo(() => {
     const colors = {};
+    if (!guesses || !solution) return colors;
     guesses.forEach(g => {
       const status = getLetterStatus(g, solution);
       g.split('').forEach((char, i) => {
@@ -213,7 +232,7 @@ const App = () => {
       });
     });
     return colors;
-  }, [guesses, solution]);
+  }, [guesses, solution, getLetterStatus]);
 
   const getTileColor = (status) => {
     if (status === 'correct') return isHighContrast ? 'bg-orange-500' : 'bg-emerald-600';
@@ -223,20 +242,20 @@ const App = () => {
   };
 
   const copyToClipboard = (text) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-9999px";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
     try {
-      document.execCommand('copy');
-      showToast("Copied to clipboard!");
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        showToast("Copied to clipboard!");
+        document.body.removeChild(textArea);
     } catch (err) {
       showToast("Unable to copy");
     }
-    document.body.removeChild(textArea);
   };
 
   const resetGame = () => {
@@ -249,41 +268,47 @@ const App = () => {
     setShowStats(false);
   };
 
+  const winPct = useMemo(() => {
+      if (!stats || !stats.gamesPlayed) return 0;
+      return Math.round((stats.gamesWon / stats.gamesPlayed) * 100);
+  }, [stats]);
+
+  if (!isInitialized) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>;
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center overflow-x-hidden">
+    <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center overflow-x-hidden selection:bg-emerald-500/30">
       <header className="w-full max-w-md flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex gap-3">
-          <Settings className="w-5 h-5 cursor-pointer text-gray-400" onClick={() => setShowSettings(true)} />
-          <Info className="w-5 h-5 cursor-pointer text-gray-400" onClick={() => showToast("Guess the 5-letter word!")} />
+          <Settings className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white" onClick={() => setShowSettings(true)} />
+          <Info className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white" onClick={() => showToast("Guess the 5-letter word in 6 tries!")} />
         </div>
         <div className="text-center">
-            <h1 className="text-xl font-black tracking-tighter uppercase">Wordle Pro</h1>
+            <h1 className="text-xl font-black tracking-tighter uppercase">Wordle Pro v20</h1>
             <div className="text-[9px] uppercase tracking-widest text-gray-500 font-bold">
-                {gameMode === 'daily' ? `Daily #${gameNumber}` : 'Practice'}
+                {gameMode === 'daily' ? `Daily #${gameNumber}` : 'Practice Mode'}
             </div>
         </div>
-        <BarChart2 className="w-5 h-5 cursor-pointer text-gray-400" onClick={() => setShowStats(true)} />
+        <BarChart2 className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white" onClick={() => setShowStats(true)} />
       </header>
 
-      {/* Grid */}
-      <div className="flex-grow flex flex-col justify-center gap-1.5 py-6">
+      <main className="flex-grow flex flex-col justify-center gap-1.5 py-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className={`flex gap-1.5 ${shakeRow && i === guesses.length ? 'animate-shake' : ''}`}>
+          <div key={i} className="flex gap-1.5">
             {Array.from({ length: 5 }).map((_, j) => {
-              const char = i < guesses.length ? guesses[i][j] : (i === guesses.length ? currentGuess[j] : '');
-              const status = i < guesses.length ? getLetterStatus(guesses[i], solution)[j] : null;
+              const rowGuesses = guesses || [];
+              const char = i < rowGuesses.length ? rowGuesses[i][j] : (i === rowGuesses.length ? currentGuess[j] : '');
+              const status = i < rowGuesses.length ? getLetterStatus(rowGuesses[i], solution)[j] : null;
               return (
-                <div key={j} className={`w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-2xl font-bold uppercase rounded transition-all duration-500 ${getTileColor(status)}`}>
+                <div key={j} className={`w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-2xl font-bold uppercase rounded transition-all duration-500 ${getTileColor(status)} ${char ? 'scale-105' : ''}`}>
                   {char}
                 </div>
               );
             })}
           </div>
         ))}
-      </div>
+      </main>
 
-      {/* Keyboard */}
-      <div className="w-full max-w-md px-1 pb-6">
+      <footer className="w-full max-w-md px-1 pb-6 select-none">
         {[
           ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
           ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
@@ -298,7 +323,7 @@ const App = () => {
                 <button 
                   key={k} 
                   onClick={() => onKeyPress(k)} 
-                  className={`h-14 ${isSpecial ? 'px-3 text-[10px]' : 'flex-1'} rounded font-bold uppercase ${colorClass} active:opacity-50 transition-all touch-manipulation`}
+                  className={`h-14 ${isSpecial ? 'px-3 text-[10px]' : 'flex-1'} rounded font-bold uppercase ${colorClass} active:scale-95 transition-all touch-manipulation`}
                 >
                   {k === 'BACKSPACE' ? '⌫' : k}
                 </button>
@@ -306,54 +331,54 @@ const App = () => {
             })}
           </div>
         ))}
-      </div>
+      </footer>
 
-      {/* Stats Modal */}
       {showStats && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
-          <div className="bg-gray-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative border border-gray-700">
-            <button onClick={() => setShowStats(false)} className="absolute top-4 right-4 text-gray-400"><X /></button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-gray-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl relative border border-gray-700 animate-in fade-in zoom-in duration-300">
+            <button onClick={() => setShowStats(false)} className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"><X /></button>
             
-            <h2 className="text-center text-sm font-bold uppercase tracking-widest text-gray-400 mb-6">Statistics</h2>
+            <h2 className="text-center text-sm font-bold uppercase tracking-widest text-gray-400 mb-8">Statistics</h2>
             
-            <div className="flex justify-around mb-8">
+            <div className="flex justify-around mb-10">
               <div className="text-center">
-                <div className="text-3xl font-black">{stats?.gamesPlayed || 0}</div>
-                <div className="text-[10px] uppercase text-gray-500 font-bold">Played</div>
+                <div className="text-4xl font-black">{stats?.gamesPlayed || 0}</div>
+                <div className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Played</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black">{Math.round(((stats?.gamesWon || 0) / (stats?.gamesPlayed || 1)) * 100)}</div>
-                <div className="text-[10px] uppercase text-gray-500 font-bold">Win %</div>
+                <div className="text-4xl font-black">{winPct}</div>
+                <div className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Win %</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black">{stats?.currentStreak || 0}</div>
-                <div className="text-[10px] uppercase text-gray-500 font-bold">Streak</div>
+                <div className="text-4xl font-black">{stats?.currentStreak || 0}</div>
+                <div className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Streak</div>
               </div>
             </div>
 
             {gameStatus !== 'playing' && (
-              <div className="space-y-4">
+              <div className="space-y-6 pt-4 border-t border-gray-700">
                 <div className="text-center">
-                    <p className="text-xs text-gray-400 uppercase font-bold tracking-widest mb-1">
-                        {gameStatus === 'won' ? 'Magnificent!' : 'Next time!'}
+                    <p className="text-xs text-gray-400 uppercase font-bold tracking-widest mb-2">
+                        {gameStatus === 'won' ? 'Magnificent!' : 'The word was'}
                     </p>
-                    <p className="text-2xl font-black uppercase text-emerald-400">{solution}</p>
+                    <p className="text-3xl font-black uppercase text-emerald-400 tracking-widest">{solution}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-3">
                     <button 
                         onClick={() => {
+                            if (!guesses) return;
                             const grid = guesses.map(g => getLetterStatus(g, solution).map(s => s === 'correct' ? '🟩' : (s === 'present' ? '🟨' : '⬛')).join('')).join('\n');
-                            copyToClipboard(`Wordle Pro ${gameMode === 'daily' ? gameNumber : 'Practice'} ${gameStatus === 'won' ? guesses.length : 'X'}/6\n\n${grid}`);
+                            copyToClipboard(`Wordle Pro ${gameMode === 'daily' ? '#' + gameNumber : 'Practice'} ${gameStatus === 'won' ? guesses.length : 'X'}/6\n\n${grid}`);
                         }}
-                        className="flex-1 bg-emerald-600 py-4 rounded-xl font-black uppercase flex items-center justify-center gap-2"
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-black uppercase flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg shadow-emerald-900/20"
                     >
-                        Share <Share2 className="w-4 h-4" />
+                        Share Result <Share2 className="w-5 h-5" />
                     </button>
                     <button 
                         onClick={resetGame}
-                        className="flex-1 bg-gray-700 py-4 rounded-xl font-black uppercase flex items-center justify-center gap-2"
+                        className="w-full bg-gray-700 hover:bg-gray-600 py-4 rounded-2xl font-black uppercase flex items-center justify-center gap-3 transition-all active:scale-95"
                     >
-                        Reset <RotateCcw className="w-4 h-4" />
+                        New Game <RotateCcw className="w-5 h-5" />
                     </button>
                 </div>
               </div>
@@ -362,45 +387,51 @@ const App = () => {
         </div>
       )}
 
-      {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
-          <div className="bg-gray-800 w-full max-w-sm rounded-2xl p-6 border border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold uppercase tracking-widest">Settings</h2>
-                <X onClick={() => setShowSettings(false)} className="cursor-pointer" />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-gray-800 w-full max-w-sm rounded-3xl p-8 border border-gray-700 animate-in fade-in slide-in-from-bottom-10 duration-300">
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="font-black uppercase tracking-widest text-lg">Settings</h2>
+                <X onClick={() => setShowSettings(false)} className="cursor-pointer text-gray-400 hover:text-white" />
             </div>
-            <div className="space-y-6">
+            <div className="space-y-8">
                 <div className="flex justify-between items-center">
-                    <span className="font-bold">High Contrast</span>
-                    <button onClick={() => setIsHighContrast(!isHighContrast)} className={`w-12 h-6 rounded-full relative transition-colors ${isHighContrast ? 'bg-emerald-500' : 'bg-gray-600'}`}>
-                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isHighContrast ? 'left-7' : 'left-1'}`} />
+                    <div>
+                        <div className="font-bold">High Contrast Mode</div>
+                        <div className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">For improved color vision</div>
+                    </div>
+                    <button onClick={() => setIsHighContrast(!isHighContrast)} className={`w-14 h-8 rounded-full relative transition-all duration-300 ${isHighContrast ? 'bg-orange-500' : 'bg-gray-600'}`}>
+                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 ${isHighContrast ? 'left-7' : 'left-1'}`} />
                     </button>
                 </div>
-                <button 
-                    onClick={() => { setGameMode(gameMode === 'daily' ? 'practice' : 'daily'); setShowSettings(false); }}
-                    className="w-full bg-gray-700 py-3 rounded-lg font-bold uppercase text-xs tracking-widest"
-                >
-                    Switch to {gameMode === 'daily' ? 'Practice' : 'Daily'} Mode
-                </button>
+                <div className="pt-4 border-t border-gray-700">
+                    <button 
+                        onClick={() => { setGameMode(gameMode === 'daily' ? 'practice' : 'daily'); setShowSettings(false); setGuesses([]); setGameStatus('playing'); setSolution(''); }}
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-black uppercase text-sm tracking-widest transition-all active:scale-95"
+                    >
+                        Switch to {gameMode === 'daily' ? 'Practice' : 'Daily'}
+                    </button>
+                    <p className="text-[10px] text-gray-500 text-center mt-3 uppercase font-bold">Only daily progress is saved to global stats</p>
+                </div>
             </div>
           </div>
         </div>
       )}
 
       {toast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-white text-black font-bold py-2 px-6 rounded-full shadow-2xl z-[200] text-sm animate-fade-in-down">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-white text-black font-black py-3 px-8 rounded-xl shadow-2xl z-[200] text-sm animate-bounce">
           {toast}
         </div>
       )}
 
       <style>{`
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translate(-50%, -20px); }
-          to { opacity: 1; transform: translate(-50%, 0); }
-        }
-        .animate-fade-in-down { animation: fadeInDown 0.3s ease-out; }
         .touch-manipulation { touch-action: manipulation; }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-5px); }
+          40%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
       `}</style>
     </div>
   );
