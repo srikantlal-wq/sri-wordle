@@ -19,7 +19,6 @@ if (typeof __firebase_config === 'undefined') {
 if (typeof __app_id === 'undefined') {
   window.__app_id = 'my-custom-wordle';
 }
-
 // --- Firebase Configuration ---
 const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
@@ -27,12 +26,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-// Word list remains consistent
 const SOLUTION_WORDS = ["ABOUT", "ABOVE", "ADAPT", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN", "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIKE", "ALIVE", "ALLOW", "ALONE", "ALONG", "ALTER", "AMONG", "ANGER", "ANGLE", "ANGRY", "APART", "APPLE", "APPLY", "ARENA", "ARGUE", "ARISE", "ARRAY", "ASIDE", "ASSET", "AUDIO", "AUDIT", "AVOID", "AWARD", "AWARE", "AWFUL", "BADGE", "BAKER", "BASIC", "BASIS", "BEACH", "BEARD", "BEAST", "BEGIN", "BEING", "BELOW", "BENCH", "BIBLE", "BIRTH", "BLACK", "BLADE", "BLAME", "BLAST", "BLEND", "BLOCK", "BLOOD", "BOARD", "BOOST", "BOOTH", "BOUND", "BRAIN", "BRAND", "BRASS", "BRAVE", "BREAD", "BREAK", "BREED", "BRIEF", "BRING", "BROAD", "BROKE", "BROWN", "BUILD", "BUILT", "BUYER", "CABLE", "CALIF", "CAMEL", "CANAL", "CANDY", "CANOE", "CARDS", "CARRY", "CARVE", "CASEY", "CATCH", "CAUSE", "CHAIN", "CHAIR", "CHART", "CHASE", "CHEAP", "CHECK", "CHEEK", "CHEST", "CHIEF", "CHILD", "CHINA", "CHOIR", "CHOSE", "CHUCK", "CIVIL", "CLAIM", "CLASS", "CLEAN", "CLEAR", "CLICK", "CLOCK", "CLOSE", "CLOUD", "COACH", "COAST", "COLOR", "COUCH", "COULD", "COUNT", "COURT", "COVER", "CRACK", "CRAFT", "CRASH", "CRAWL", "CRAZY", "CREAM", "CREEK", "CRIME", "CROSS", "CROWD", "CROWN", "CRUDE", "CRUEL", "CRUSH", "CURVE", "CYCLE", "DAILY", "DANCE", "DEALT", "DEATH", "DEBUG", "DELAY", "DELTA", "DENSE", "DEPTH", "DERBY", "DIARY", "DIGIT", "DIRTY", "DISCO", "DITCH", "DIVID", "DOGMA", "DOUBT", "DOZEN", "DRAFT", "DRAIN", "DRAMA", "DREAD", "DREAM", "DRESS", "DRIFT", "DRILL", "DRINK", "DRIVE", "DROVE", "DYING", "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE", "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY", "EQUAL", "ERROR", "ESSAY", "EVENT", "EVERY", "EXACT", "EXIST", "EXTRA", "FAITH", "FALSE", "FAULT", "FAVOR", "FEAST", "FIELD", "FIFTY", "FIGHT", "FINAL", "FIRST", "FLAME", "FLASH", "FLEET", "FLIGHT", "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH", "FORTY", "FORUM", "FOUND", "FRAME", "FRANK", "FRAUD", "FRESH", "FRONT", "FROST", "FRUIT", "FUNNY", "GHOST", "GIANT", "GIVEN", "GLASS", "GLOVE", "GLYPH", "GOING", "GRACE", "GRADE", "GRAND", "GRANT", "GRAPH", "GRASP", "GRASS", "GREAT", "GREEN", "GREET", "GRIEF", "GRIND", "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "HABIT", "HAPPY", "HARSH", "HEART", "HEAVY", "HELLO", "HENCE", "HONOR", "HORSE", "HOTEL", "HOUSE", "HUMAN", "IDEAL", "IMAGE", "INDEX", "INNER", "INPUT", "IRONIC", "ISSUE", "ITSELF", "JACKS", "JOINT", "JUDGE", "JUICE", "KNIFE", "KNOCK", "LABEL", "LABOR", "LARGE", "LASER", "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL", "LEVEL", "LIGHT", "LIMIT", "LINUX", "LOCAL", "LOGIC", "LOOSE", "LOWER", "LUCKY", "LUNCH", "LYRIC", "MAGIC", "MAJOR", "MAKER", "MARCH", "MARRY", "MATCH", "MAYBE", "MAYOR", "MEDIA", "METAL", "METER", "MIGHT", "MINOR", "MINUS", "MIXED", "MODEL", "MODEM", "MOIST", "MONEY", "MONTH", "MORAL", "MOTOR", "MOUNT", "MOUSE", "MOUTH", "MOVIE", "MUSIC", "NAIVE", "NAKED", "NIGHT", "NOBLE", "NOISE", "NORTH", "NOTED", "NOVEL", "NURSE", "OCEAN", "OFFER", "OFTEN", "ORDER", "OTHER", "OUGHT", "OUTER", "OWNER", "PANEL", "PAPER", "PARTY", "PEACE", "PHASE", "PHONE", "PHOTO", "PIANO", "PIECE", "PILOT", "PITCH", "PIXEL", "PLACE", "PLAIN", "PLANE", "PLANT", "PLATE", "POINT", "POUND", "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT", "PRIOR", "PRIZE", "PROOF", "PROUD", "PROVE", "PROXY", "PULSE", "PUNCH", "QUERY", "QUEST", "QUEUE", "QUICK", "QUIET", "QUITE", "QUOTE", "RADIO", "RAISE", "RANGE", "RAPID", "RATIO", "REACH", "REACT", "READY", "REALM", "REBEL", "REFER", "RELAX", "REPLY", "RESET", "RESIN", "RETRO", "RIDER", "RIGHT", "RIVAL", "RIVER", "ROBOT", "ROCKY", "ROUGH", "ROUND", "ROUTE", "ROYAL", "RURAL", "SALAD", "SALES", "SAUCE", "SCALE", "SCENE", "SCOPE", "SCORE", "SCRAP", "SENSE", "SERVE", "SETUP", "SEVEN", "SHADE", "SHAFT", "SHAKE", "SHALL", "SHAME", "SHAPE", "SHARE", "SHARP", "SHEEP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRT", "SHOCK", "SHOOT", "SHORT", "SHOUT", "SHOWN", "SIGHT", "SINCE", "SIXTH", "SKILL", "SLEEP", "SLIDE", "SMALL", "SMART", "SMILE", "SMITH", "SMOKE", "SOLID", "SOLVE", "SORRY", "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEED", "SPEND", "SPERM", "SPICE", "SPIKE", "SPINE", "SPIRIT", "SPLIT", "SPOKE", "SPORT", "STAFF", "STAGE", "STAIR", "STAKE", "STAND", "STARE", "START", "STATE", "STEAK", "STEAL", "STEAM", "STEEL", "STEEP", "STEER", "STICK", "STIFF", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM", "STORY", "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER", "SWEET", "SWIFT", "SWING", "TABLE", "TAKEN", "TALLY", "TASTE", "TAXES", "TEACH", "TEETH", "TERMS", "THANK", "THEFT", "THEIR", "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE", "THREE", "THREW", "THROW", "TIGHT", "TIMES", "TIRED", "TITLE", "TODAY", "TOKEN", "TOPIC", "TOTAL", "TOUCH", "TOUGH", "TOWER", "TRACK", "TRADE", "TRAIL", "TRAIN", "TREAD", "TREAT", "TREND", "TRIAL", "TRIBE", "TRICK", "TRIED", "TRUCK", "TRULY", "TRUST", "TRUTH", "TWICE", "UNCLE", "UNDER", "UNION", "UNITE", "UNITY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USUAL", "VALID", "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOICE", "WASTE", "WATCH", "WATER", "WHEEL", "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE", "WOMAN", "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WOUND", "WRITE", "WRONG", "YOUTH", "ZEBRA"];
 const VALID_GUESSES = new Set([...SOLUTION_WORDS, "WHOMP", "CRWTH", "FJORD", "QUIRK", "ZIBET"]); 
 
-const MAX_GUESSES = 6;
-const WORD_LENGTH = 5;
 const START_DATE = new Date('2024-01-01').getTime();
 
 const App = () => {
@@ -43,7 +39,7 @@ const App = () => {
   const [gameStatus, setGameStatus] = useState('playing');
   const [toast, setToast] = useState(null);
   const [shakeRow, setShakeRow] = useState(false);
-  const [gameMode, setGameMode] = useState('daily');
+  const [gameMode, setGameMode] = useState('daily'); // 'daily' or 'practice'
   const [gameNumber, setGameNumber] = useState(0);
   
   // Settings & Stats
@@ -80,21 +76,39 @@ const App = () => {
     return { word: SOLUTION_WORDS[dayIndex % SOLUTION_WORDS.length], number: dayIndex };
   }, []);
 
+  // Initialize game
+  useEffect(() => {
+    if (gameMode === 'daily') {
+      const { word, number } = getDailyInfo();
+      setSolution(word);
+      setGameNumber(number);
+    } else if (!solution) {
+      // Start practice mode
+      const randomWord = SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
+      setSolution(randomWord);
+    }
+  }, [gameMode, getDailyInfo, solution]);
+
   // --- Firestore Data Sync ---
   useEffect(() => {
     if (!user) return;
-    const gameId = gameMode === 'daily' ? `daily-${gameNumber}` : 'random-session';
+    const gameId = gameMode === 'daily' ? `daily-${gameNumber}` : 'practice-mode';
     const gameRef = doc(db, 'artifacts', appId, 'users', user.uid, 'games', gameId);
     const statsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'stats');
 
     const unsubGame = onSnapshot(gameRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        if (data.solution === solution || gameMode === 'daily') {
+        // Only load if the solution matches or it's a daily
+        if (gameMode === 'daily' || data.solution === solution) {
           setGuesses(data.guesses || []);
           setGameStatus(data.status || 'playing');
           if (data.solution) setSolution(data.solution);
         }
+      } else if (gameMode === 'daily') {
+        // Reset local state if no daily record exists yet
+        setGuesses([]);
+        setGameStatus('playing');
       }
     });
 
@@ -106,7 +120,7 @@ const App = () => {
   }, [user, gameMode, gameNumber, solution]);
 
   const saveStats = async (won, numGuesses) => {
-    if (!user) return;
+    if (!user || gameMode !== 'daily') return; // Statistics usually track Daily mode in real Wordle
     const newStats = { ...stats };
     newStats.gamesPlayed += 1;
     if (won) {
@@ -122,26 +136,46 @@ const App = () => {
 
   const saveGame = async (newGuesses, newStatus, sol) => {
     if (!user) return;
-    const gameId = gameMode === 'daily' ? `daily-${gameNumber}` : 'random-session';
+    const gameId = gameMode === 'daily' ? `daily-${gameNumber}` : 'practice-mode';
     await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'games', gameId), {
-      guesses: newGuesses, status: newStatus, solution: sol
+      guesses: newGuesses, status: newStatus, solution: sol, mode: gameMode
     });
   };
 
-  // --- Helper: Get Colors ---
+  const startPractice = () => {
+    const randomWord = SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
+    setGuesses([]);
+    setGameStatus('playing');
+    setSolution(randomWord);
+    setGameMode('practice');
+    setCurrentGuess('');
+    // Clear practice record in DB to start fresh
+    if (user) {
+        setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'games', 'practice-mode'), {
+            guesses: [], status: 'playing', solution: randomWord, mode: 'practice'
+        });
+    }
+  };
+
+  const switchToDaily = () => {
+    const { word, number } = getDailyInfo();
+    setGameMode('daily');
+    setSolution(word);
+    setGameNumber(number);
+    setCurrentGuess('');
+  };
+
   const getLetterStatus = (guess, sol) => {
     const result = Array(5).fill('absent');
     const solArr = sol.split('');
     const guessArr = guess.split('');
 
-    // Greens first
     guessArr.forEach((char, i) => {
       if (char === solArr[i]) {
         result[i] = 'correct';
         solArr[i] = null;
       }
     });
-    // Yellows second
     guessArr.forEach((char, i) => {
       if (result[i] !== 'correct' && solArr.includes(char)) {
         result[i] = 'present';
@@ -172,7 +206,6 @@ const App = () => {
         return showToast("Not in word list");
       }
 
-      // Hard Mode check
       if (isHardMode && guesses.length > 0) {
         const lastGuess = guesses[guesses.length - 1];
         const status = getLetterStatus(lastGuess, solution);
@@ -204,12 +237,6 @@ const App = () => {
     }
   }, [currentGuess, gameStatus, guesses, solution, isHardMode, stats, user]);
 
-  useEffect(() => {
-    const { word, number } = getDailyInfo();
-    setSolution(word);
-    setGameNumber(number);
-  }, [getDailyInfo]);
-
   const handleShare = () => {
     const grid = guesses.map(g => {
       return getLetterStatus(g, solution).map(s => {
@@ -218,7 +245,7 @@ const App = () => {
         return '⬛';
       }).join('');
     }).join('\n');
-    const text = `*SL* Wordle ${gameMode === 'daily' ? gameNumber : 'Random'} ${gameStatus === 'won' ? guesses.length : 'X'}/6\n\n${grid}`;
+    const text = `*SL* Wordle ${gameMode === 'daily' ? gameNumber : 'Practice'} ${gameStatus === 'won' ? guesses.length : 'X'}/6\n\n${grid}`;
     const el = document.createElement('textarea');
     el.value = text;
     document.body.appendChild(el);
@@ -255,7 +282,12 @@ const App = () => {
           <Info className="w-6 h-6 cursor-pointer" onClick={() => showToast("Guess the 5-letter word!")} />
           <Settings className="w-6 h-6 cursor-pointer" onClick={() => setShowSettings(true)} />
         </div>
-        <h1 className="text-3xl font-black tracking-tighter uppercase">*SL* Wordle</h1>
+        <div className="text-center">
+            <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">*SL* Wordle</h1>
+            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                {gameMode === 'daily' ? `Daily #${gameNumber}` : 'Practice Mode'}
+            </span>
+        </div>
         <div className="flex gap-2">
           <BarChart2 className="w-6 h-6 cursor-pointer" onClick={() => setShowStats(true)} />
         </div>
@@ -277,6 +309,26 @@ const App = () => {
           </div>
         ))}
       </div>
+
+      {/* Action Bar */}
+      {gameStatus !== 'playing' && (
+          <div className="flex gap-2 mb-4">
+              <button 
+                onClick={startPractice}
+                className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-full flex items-center gap-2 font-bold transition-all text-sm"
+              >
+                  <RotateCcw className="w-4 h-4" /> Practice Again
+              </button>
+              {gameMode === 'practice' && (
+                  <button 
+                    onClick={switchToDaily}
+                    className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-full font-bold transition-all text-sm"
+                  >
+                      Go to Daily
+                  </button>
+              )}
+          </div>
+      )}
 
       {/* Keyboard */}
       <div className="w-full max-w-lg px-2 pb-8">
@@ -324,6 +376,14 @@ const App = () => {
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isHighContrast ? 'left-7' : 'left-1'}`} />
                 </button>
               </div>
+              <div className="pt-4 border-t border-gray-800">
+                  <button 
+                    onClick={() => { setGameMode(gameMode === 'daily' ? 'practice' : 'daily'); setShowSettings(false); }}
+                    className="w-full bg-gray-800 py-3 rounded font-bold hover:bg-gray-700 transition-colors"
+                  >
+                      Switch to {gameMode === 'daily' ? 'Practice' : 'Daily'} Mode
+                  </button>
+              </div>
             </div>
           </div>
         </div>
@@ -334,7 +394,7 @@ const App = () => {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 border border-gray-800 w-full max-w-md rounded-xl p-8 relative flex flex-col items-center">
             <X className="absolute top-4 right-4 cursor-pointer" onClick={() => setShowStats(false)} />
-            <h2 className="text-sm font-bold uppercase tracking-widest mb-4">Statistics</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest mb-4">Statistics (Daily)</h2>
             <div className="flex justify-around w-full mb-8 text-center">
               <div><div className="text-3xl font-bold">{stats.gamesPlayed}</div><div className="text-[10px] uppercase">Played</div></div>
               <div><div className="text-3xl font-bold">{Math.round((stats.gamesWon / (stats.gamesPlayed || 1)) * 100)}</div><div className="text-[10px] uppercase">Win %</div></div>
@@ -359,14 +419,16 @@ const App = () => {
             </div>
 
             {gameStatus !== 'playing' && (
-              <div className="flex gap-4 w-full">
-                <div className="flex-1 text-center border-r border-gray-800">
-                  <div className="text-xs uppercase font-bold mb-1">Next *SL* Wordle</div>
-                  <div className="text-2xl font-mono">DAILY ONLY</div>
+              <div className="flex flex-col gap-3 w-full">
+                {gameStatus === 'lost' && <div className="text-center font-bold text-red-400 mb-2">Word was: {solution}</div>}
+                <div className="flex gap-4 w-full">
+                    <button onClick={handleShare} className="flex-1 bg-emerald-600 hover:bg-emerald-500 rounded flex items-center justify-center gap-2 font-bold py-3 transition-colors uppercase text-sm">
+                    Share <Share2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={startPractice} className="flex-1 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center gap-2 font-bold py-3 transition-colors uppercase text-sm">
+                    New Practice <RotateCcw className="w-4 h-4" />
+                    </button>
                 </div>
-                <button onClick={handleShare} className="flex-1 bg-emerald-600 hover:bg-emerald-500 rounded flex items-center justify-center gap-2 font-bold py-3 transition-colors uppercase text-sm">
-                  Share <Share2 className="w-4 h-4" />
-                </button>
               </div>
             )}
           </div>
