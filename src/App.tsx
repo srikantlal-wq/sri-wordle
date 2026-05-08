@@ -119,7 +119,9 @@ export default function App() {
     const minutes = Math.floor(timer / 60);
     const seconds = timer % 60;
     const timeText = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-    const text = `Wordle Beta Version 2.1\nTime: ${timeText}\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
+    
+    // Updated share text to match your branding precisely
+    const text = `SL Wordle Beta Version 2.1\nTime: ${timeText}\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
     
     if (navigator.share) {
       navigator.share({ text }).catch(() => copyFallback(text));
