@@ -119,7 +119,7 @@ export default function App() {
     const minutes = Math.floor(timer / 60);
     const seconds = timer % 60;
     const timeText = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-    const text = `Wordle SL Beta Version 1.9\nTime: ${timeText}\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
+    const text = `Wordle Beta Version 2.1\nTime: ${timeText}\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
     
     if (navigator.share) {
       navigator.share({ text }).catch(() => copyFallback(text));
@@ -146,11 +146,13 @@ export default function App() {
     <div className="flex flex-col items-center min-h-screen bg-white text-slate-900 p-2 font-sans select-none overflow-x-hidden">
       <header className="text-center py-4">
         <div className="flex items-center justify-center gap-2">
-            <div className="bg-green-600 text-white w-8 h-8 rounded flex items-center justify-center font-black shadow-sm">W</div>
+            <div className="bg-green-600 text-white px-2 py-1 rounded flex items-center justify-center font-black shadow-sm text-lg leading-tight">
+                SL
+            </div>
             <h1 className="text-3xl font-black tracking-tighter">WORDLE</h1>
         </div>
-        <p className="text-sm mt-1 text-blue-600 font-medium tracking-tight" style={{ fontFamily: 'cursive' }}>
-            SL Beta Version 1.9
+        <p className="text-[11px] mt-1 text-blue-600 font-bold uppercase tracking-widest">
+            Beta Version 2.1
         </p>
       </header>
 
