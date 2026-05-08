@@ -10,11 +10,11 @@ export default function App() {
   const [guesses, setGuesses] = useState<string[]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost' | 'finished'>('playing');
+  const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState('');
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [timer, setTimer] = useState(0);
 
-  // Initialize Game
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     if (mode === 'daily') {
@@ -26,7 +26,7 @@ export default function App() {
         setSolution(data.solution);
         setTimer(data.time || 0);
         setGameStatus('finished');
-        setMessage("Completed for today!");
+        setShowModal(true);
       } else {
         const seed = today.split('-').join('');
         const index = parseInt(seed) % SOLUTION_WORDS.length;
@@ -43,6 +43,7 @@ export default function App() {
     setGuesses([]);
     setCurrentGuess('');
     setGameStatus('playing');
+    setShowModal(false);
     setMessage('');
     setStartTime(Date.now());
     setTimer(0);
@@ -77,9 +78,11 @@ export default function App() {
       setCurrentGuess('');
       if (currentGuess === solution) {
         setGameStatus('won');
+        setShowModal(true);
         if (mode === 'daily') saveDaily(newGuesses, 'won', timer);
       } else if (newGuesses.length >= MAX_GUESSES) {
         setGameStatus('lost');
+        setShowModal(true);
         if (mode === 'daily') saveDaily(newGuesses, 'lost', timer);
       }
     } else if (key === 'BACKSPACE') {
@@ -113,12 +116,10 @@ export default function App() {
       }).join('');
     }).join('\n');
     
-    // Formatting time for share text
     const minutes = Math.floor(timer / 60);
     const seconds = timer % 60;
     const timeText = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-
-    const text = `Wordle Beta SrikantV1.9\nTime: ${timeText}\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
+    const text = `Wordle SL Beta Version 1.9\nTime: ${timeText}\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
     
     if (navigator.share) {
       navigator.share({ text }).catch(() => copyFallback(text));
@@ -144,8 +145,13 @@ export default function App() {
   return (
     <div className="flex flex-col items-center min-h-screen bg-white text-slate-900 p-2 font-sans select-none overflow-x-hidden">
       <header className="text-center py-4">
-        <h1 className="text-3xl font-black tracking-tighter">WORDLE</h1>
-        <p className="text-lg text-blue-600" style={{ fontFamily: 'cursive' }}>Beta SrikantV1.9</p>
+        <div className="flex items-center justify-center gap-2">
+            <div className="bg-green-600 text-white w-8 h-8 rounded flex items-center justify-center font-black shadow-sm">W</div>
+            <h1 className="text-3xl font-black tracking-tighter">WORDLE</h1>
+        </div>
+        <p className="text-sm mt-1 text-blue-600 font-medium tracking-tight" style={{ fontFamily: 'cursive' }}>
+            SL Beta Version 1.9
+        </p>
       </header>
 
       <div className="flex items-center gap-3 mb-4">
@@ -166,15 +172,27 @@ export default function App() {
         <Keyboard guesses={guesses} solution={solution} onKey={handleInput} />
       </div>
 
-      {(gameStatus !== 'playing') && (
+      {showModal && (
         <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-          <div className="bg-white border-2 border-black p-8 rounded-2xl shadow-2xl text-center max-w-xs w-full">
-            <h2 className="text-2xl font-black mb-2">{gameStatus === 'won' ? 'SPLENDID!' : 'GAME OVER'}</h2>
+          <div className="bg-white border-2 border-black p-8 rounded-2xl shadow-2xl text-center max-w-xs w-full relative">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-black text-xl font-bold"
+            >✕</button>
+            
+            <h2 className="text-2xl font-black mb-2">
+              {gameStatus === 'won' ? 'SPLENDID!' : gameStatus === 'lost' ? 'BUMMER!' : 'ALREADY PLAYED'}
+            </h2>
             <p className="text-gray-600 mb-4">Word: <span className="font-bold text-black">{solution}</span></p>
             <p className="text-lg font-mono font-bold mb-6">Time: {timer}s</p>
+            
             <div className="flex flex-col gap-3">
               <button onClick={shareResults} className="w-full bg-green-600 text-white py-3 rounded-xl font-bold text-lg active:scale-95 transition">Share Results</button>
-              {mode === 'practice' && <button onClick={resetGameState} className="w-full bg-black text-white py-3 rounded-xl font-bold active:scale-95 transition">New Practice</button>}
+              {mode === 'practice' ? (
+                <button onClick={resetGameState} className="w-full bg-black text-white py-3 rounded-xl font-bold active:scale-95 transition">New Practice</button>
+              ) : (
+                <button onClick={() => setShowModal(false)} className="w-full bg-gray-200 text-black py-3 rounded-xl font-bold active:scale-95 transition">Close Board</button>
+              )}
             </div>
           </div>
         </div>
