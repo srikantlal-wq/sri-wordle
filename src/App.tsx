@@ -25,7 +25,6 @@ export default function App() {
   const [definition, setDefinition] = useState('');
   const [stats, setStats] = useState<UserStats>({ gamesPlayed: 0, gamesWon: 0, totalTime: 0, currentStreak: 0 });
 
-  // Load Stats from LocalStorage
   useEffect(() => {
     const savedStats = localStorage.getItem('sl-wordle-stats');
     if (savedStats) setStats(JSON.parse(savedStats));
@@ -141,7 +140,7 @@ export default function App() {
         const rowColors = getRowColors(g, solution);
         return rowColors.map(c => c === 'green' ? '🟩' : c === 'yellow' ? '🟨' : '⬛').join('');
     }).join('\n');
-    const text = `SL Wordle Beta Version 2.1\nTime: ${timer}s\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
+    const text = `SL Wordle Version 3.0\nTime: ${timer}s\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
     navigator.clipboard.writeText(text);
     showMessage("Copied to clipboard!");
   };
@@ -163,7 +162,7 @@ export default function App() {
             <div className="bg-green-600 text-white px-2 py-1 rounded flex items-center justify-center font-black shadow-sm text-lg leading-tight">SL</div>
             <h1 className="text-3xl font-black tracking-tighter">WORDLE</h1>
         </div>
-        <p className="text-[11px] mt-1 text-blue-600 font-bold uppercase tracking-widest">Beta Version 2.1</p>
+        <p className="text-[11px] mt-1 text-blue-600 font-bold uppercase tracking-widest">Version 3.0</p>
       </header>
 
       <div className="flex items-center gap-3 mb-4">
@@ -184,7 +183,6 @@ export default function App() {
         <Keyboard guesses={guesses} solution={solution} onKey={handleInput} />
       </div>
 
-      {/* Result Modal with Definition Reveal */}
       {showModal && (
         <div className="fixed inset-0 bg-white/95 flex items-center justify-center p-6 z-50">
           <div className="bg-white border-2 border-black p-8 rounded-2xl shadow-2xl text-center max-w-xs w-full relative">
@@ -204,7 +202,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Career Dashboard Modal */}
       {showStats && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 z-[60]">
             <div className="bg-white p-8 rounded-3xl w-full max-w-sm text-center">
@@ -237,26 +234,23 @@ export default function App() {
   );
 }
 
-// Logic for proper letter counting (Green priority, then Yellow)
 function getRowColors(guess: string, solution: string) {
     const colors = Array(5).fill('grey');
     const solutionArr = solution.split('');
     const guessArr = guess.split('');
 
-    // First pass: Find Greens
     guessArr.forEach((char, i) => {
         if (char === solutionArr[i]) {
             colors[i] = 'green';
-            solutionArr[i] = ''; // Mark as used
+            solutionArr[i] = ''; 
             guessArr[i] = ''; 
         }
     });
 
-    // Second pass: Find Yellows
     guessArr.forEach((char, i) => {
         if (char !== '' && solutionArr.includes(char)) {
             colors[i] = 'yellow';
-            solutionArr[solutionArr.indexOf(char)] = ''; // Mark as used
+            solutionArr[solutionArr.indexOf(char)] = ''; 
         }
     });
 
@@ -298,7 +292,6 @@ function Keyboard({ guesses, solution, onKey }: { guesses: string[], solution: s
     if (key.length > 1) return 'bg-gray-200 text-black';
     let status = 'bg-gray-200 text-black';
     
-    // Aggregate status for the keyboard across all guesses
     guesses.forEach(g => {
         const colors = getRowColors(g, solution);
         g.split('').forEach((char, i) => {
