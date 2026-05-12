@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-// IMPORT THE DICTIONARY FROM THE JSON FILE
 import VALID_DICTIONARY from './data/dictionary.json';
 
 const SOLUTION_WORDS: string[] = ["ABOUT", "ABOVE", "ADAPT", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN", "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIKE", "ALIVE", "ALLOW", "ALONE", "ALONG", "ALTER", "AMONG", "ANGER", "ANGLE", "ANGRY", "APART", "APPLE", "APPLY", "ARENA", "ARGUE", "ARISE", "ARRAY", "ASIDE", "ASSET", "AUDIO", "AUDIT", "AVOID", "AWARD", "AWARE", "AWFUL", "BASIC", "BASIS", "BEACH", "BEARD", "BEAST", "BEGIN", "BEING", "BELOW", "BENCH", "BIRTH", "BLACK", "BLADE", "BLAME", "BLAST", "BLEND", "BLOCK", "BLOOD", "BOARD", "BOOST", "BOOTH", "BOUND", "BRAIN", "BRAND", "BRASS", "BRAVE", "BREAD", "BREAK", "BREED", "BRIEF", "BRING", "BROAD", "BROKE", "BROWN", "BUILD", "BUILT", "BUYER", "CABLE", "CAMEL", "CANAL", "CANDY", "CANOE", "CARRY", "CATCH", "CAUSE", "CHAIN", "CHAIR", "CHART", "CHASE", "CHEAP", "CHECK", "CHEEK", "CHEST", "CHIEF", "CHILD", "CHINA", "CHOIR", "CHOSE", "CIVIL", "CLAIM", "CLASS", "CLEAN", "CLEAR", "CLICK", "CLOCK", "CLOSE", "CLOUD", "COACH", "COAST", "COLOR", "COUCH", "COULD", "COUNT", "COURT", "COVER", "CRACK", "CRAFT", "CRASH", "CRAWL", "CRAZY", "CREAM", "CREEK", "CRIME", "CROSS", "CROWD", "CROWN", "CRUDE", "CRUEL", "CRUSH", "CURVE", "CYCLE", "DAILY", "DANCE", "DEALT", "DEATH", "DELAY", "DELTA", "DENSE", "DEPTH", "DIARY", "DIGIT", "DIRTY", "DISCO", "DITCH", "DOUBT", "DOZEN", "DRAFT", "DRAIN", "DRAMA", "DREAD", "DREAM", "DRESS", "DRIFT", "DRILL", "DRINK", "DRIVE", "DROVE", "DYING", "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE", "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY", "EQUAL", "ERROR", "ESSAY", "EVENT", "EVERY", "EXACT", "EXIST", "EXTRA", "FAITH", "FALSE", "FAULT", "FAVOR", "FEAST", "FIELD", "FIFTY", "FIGHT", "FINAL", "FIRST", "FLAME", "FLASH", "FLEET", "FLIGHT", "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH", "FORTY", "FORUM", "FOUND", "FRAME", "FRANK", "FRAUD", "FRESH", "FRONT", "FROST", "FRUIT", "FUNNY", "GHOST", "GIANT", "GIVEN", "GLASS", "GLOVE", "GOING", "GRACE", "GRADE", "GRAND", "GRANT", "GRAPH", "GRASP", "GRASS", "GREAT", "GREEN", "GREET", "GRIEF", "GRIND", "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "HABIT", "HAPPY", "HARSH", "HEART", "HEAVY", "HELLO", "HENCE", "HONOR", "HORSE", "HOTEL", "HOUSE", "HUMAN", "IDEAL", "IMAGE", "INDEX", "INNER", "INPUT", "ISSUE", "JOINT", "JUDGE", "JUICE", "KNIFE", "KNOCK", "LABEL", "LABOR", "LARGE", "LASER", "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL", "LEVEL", "LIGHT", "LIMIT", "LOCAL", "LOGIC", "LOOSE", "LOWER", "LUCKY", "LUNCH", "LYRIC", "MAGIC", "MAJOR", "MAKER", "MARCH", "MARRY", "MATCH", "MAYBE", "MAYOR", "MEDIA", "METAL", "METER", "MIGHT", "MINOR", "MINUS", "MODEL", "MODEM", "MOIST", "MONEY", "MONTH", "MORAL", "MOTOR", "MOUNT", "MOUSE", "MOUTH", "MOVIE", "MUSIC", "NAIVE", "NIGHT", "NOBLE", "NOISE", "NORTH", "NOTED", "NOVEL", "NURSE", "OCEAN", "OFFER", "OFTEN", "ORDER", "OTHER", "OUGHT", "OUTER", "OWNER", "PANEL", "PAPER", "PARTY", "PEACE", "PHASE", "PHONE", "PHOTO", "PIANO", "PIECE", "PILOT", "PITCH", "PIXEL", "PLACE", "PLAIN", "PLANE", "PLANT", "PLATE", "POINT", "POUND", "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT", "PRIOR", "PRIZE", "PROOF", "PROUD", "PROVE", "PROXY", "PULSE", "PUNCH", "QUERY", "QUEST", "QUEUE", "QUICK", "QUIET", "QUITE", "QUOTE", "RADIO", "RAISE", "RANGE", "RAPID", "RATIO", "REACH", "REACT", "READY", "REALM", "REBEL", "REFER", "RELAX", "REPLY", "RESET", "RESIN", "RETRO", "RIDER", "RIGHT", "RIVAL", "RIVER", "ROBOT", "ROCKY", "ROUGH", "ROUND", "ROUTE", "ROYAL", "RURAL", "SALAD", "SALES", "SAUCE", "SCALE", "SCENE", "SCOPE", "SCORE", "SCRAP", "SENSE", "SERVE", "SETUP", "SEVEN", "SHADE", "SHAFT", "SHAKE", "SHALL", "SHAME", "SHAPE", "SHARE", "SHARP", "SHEEP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRT", "SHOCK", "SHOOT", "SHORT", "SHOUT", "SHOWN", "SIGHT", "SINCE", "SIXTH", "SKILL", "SLEEP", "SLIDE", "SMALL", "SMART", "SMILE", "SMITH", "SMOKE", "SOLID", "SOLVE", "SORRY", "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEED", "SPEND", "SPICE", "SPIKE", "SPINE", "SPIRIT", "SPLIT", "SPOKE", "SPORT", "STAFF", "STAGE", "STAIR", "STAKE", "STAND", "STARE", "START", "STATE", "STEAK", "STEAL", "STEAM", "STEEL", "STEEP", "STEER", "STICK", "STIFF", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM", "STORY", "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER", "SWEET", "SWIFT", "SWING", "TABLE", "TAKEN", "TALLY", "TASTE", "TAXES", "TEACH", "TEETH", "TERMS", "THANK", "THEFT", "THEIR", "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE", "THREE", "THREW", "THROW", "TIGHT", "TIMES", "TIRED", "TITLE", "TODAY", "TOKEN", "TOPIC", "TOTAL", "TOUCH", "TOUGH", "TOWER", "TRACK", "TRADE", "TRAIL", "TRAIN", "TREAD", "TREAT", "TREND", "TRIAL", "TRIBE", "TRICK", "TRIED", "TRUCK", "TRULY", "TRUST", "TRUTH", "TWICE", "UNCLE", "UNDER", "UNION", "UNITE", "UNITY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USUAL", "VALID", "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOICE", "WASTE", "WATCH", "WATER", "WHEEL", "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE", "WOMAN", "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WOUND", "WRITE", "WRONG", "YOUTH", "ZEBRA"];
@@ -29,10 +28,15 @@ export default function App() {
   const [stats, setStats] = useState<UserStats>({ gamesPlayed: 0, gamesWon: 0, totalTime: 0, currentStreak: 0 });
   const [revealingRow, setRevealingRow] = useState<number | null>(null);
 
-  // --- UTILITIES ---
   const showMessage = (msg: string) => {
     setMessage(msg);
     setTimeout(() => setMessage(''), 2000);
+  };
+
+  const getDailyId = () => {
+    const epoch = new Date('2021-06-19').getTime(); // Standard Wordle epoch
+    const today = new Date().getTime();
+    return Math.floor((today - epoch) / (1000 * 60 * 60 * 24));
   };
 
   const updateStats = (won: boolean, time: number) => {
@@ -44,6 +48,16 @@ export default function App() {
     };
     setStats(newStats);
     localStorage.setItem('sl-wordle-stats', JSON.stringify(newStats));
+    
+    if (mode === 'daily') {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(`daily-${today}`, JSON.stringify({
+        guesses: guesses.concat(currentGuess.toUpperCase()), // Include the final word
+        solution,
+        time,
+        status: won ? 'won' : 'lost'
+      }));
+    }
   };
 
   const fetchDefinition = async (word: string) => {
@@ -61,7 +75,6 @@ export default function App() {
     setCurrentGuess('');
     setGameStatus('playing');
     setShowModal(false);
-    setMessage('');
     setStartTime(Date.now());
     setTimer(0);
     setDefinition('');
@@ -69,8 +82,7 @@ export default function App() {
 
     if (targetMode === 'daily') {
       const today = new Date().toISOString().split('T')[0];
-      const dailyKey = `daily-${today}`;
-      const saved = localStorage.getItem(dailyKey);
+      const saved = localStorage.getItem(`daily-${today}`);
       if (saved) {
         const data = JSON.parse(saved);
         setGuesses(data.guesses);
@@ -88,13 +100,13 @@ export default function App() {
       const newWord = SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
       setSolution(newWord);
     }
-  }, []);
+  }, [guesses]);
 
   useEffect(() => {
     const savedStats = localStorage.getItem('sl-wordle-stats');
     if (savedStats) setStats(JSON.parse(savedStats));
     setupGame(mode);
-  }, [mode, setupGame]);
+  }, [mode]);
 
   useEffect(() => {
     let interval: any;
@@ -115,7 +127,6 @@ export default function App() {
         showMessage("Too short");
         return;
       }
-      
       if (!DICTIONARY_SET.has(word)) {
         showMessage("Not in word list");
         return;
@@ -147,14 +158,18 @@ export default function App() {
     } else if (currentGuess.length < 5 && /^[A-Z]$/.test(key)) {
       setCurrentGuess(prev => prev + key);
     }
-  }, [currentGuess, guesses, gameStatus, solution, timer, revealingRow]);
+  }, [currentGuess, guesses, gameStatus, solution, timer, revealingRow, mode]);
 
   const shareResults = () => {
     const emojiGrid = guesses.map(g => {
       const rowColors = getRowColors(g, solution);
       return rowColors.map(c => c === 'green' ? '🟩' : c === 'yellow' ? '🟨' : '⬛').join('');
     }).join('\n');
-    const text = `SL Wordle v3.7\nTime: ${timer}s\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
+    
+    const title = mode === 'daily' ? `SL Wordle Daily #${getDailyId()}` : `SL Wordle Practice`;
+    const scoreText = gameStatus === 'won' ? `${guesses.length}/6` : 'X/6';
+    const text = `${title} (${scoreText})\nTime: ${timer}s\n\n${emojiGrid}`;
+    
     navigator.clipboard.writeText(text);
     showMessage("Copied to clipboard!");
   };
@@ -162,9 +177,9 @@ export default function App() {
   const analysis = useMemo(() => {
     if (gameStatus === 'playing' || guesses.length === 0) return null;
     const pace = timer / guesses.length;
-    let feedback = "Systematic play! You're narrowing down patterns.";
+    let feedback = "Patterns identified. Sharp deduction!";
     if (gameStatus === 'won') {
-      if (guesses.length <= 2) feedback = "Absolute genius!";
+      if (guesses.length <= 2) feedback = "Flawless execution. Exceptional!";
       else if (pace < 12) feedback = "Blazing fast reflexes.";
     }
     return { feedback, pace: pace.toFixed(1) };
@@ -180,19 +195,37 @@ export default function App() {
   }, [handleInput]);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-white text-slate-900 p-2 font-sans select-none overflow-x-hidden">
-      <header className="text-center py-4 w-full relative">
-        <button onClick={() => setShowStats(true)} className="absolute left-4 top-6 text-xl">📊</button>
-        <div className="flex items-center justify-center gap-2">
-          <div className="bg-green-600 text-white px-2 py-1 rounded flex items-center justify-center font-black shadow-sm text-lg leading-tight">SL</div>
-          <h1 className="text-3xl font-black tracking-tighter">WORDLE</h1>
-        </div>
-      </header>
+    <div className="flex flex-col items-center h-[100dvh] bg-white text-slate-900 p-2 font-sans select-none overflow-hidden">
+      {/* Header - Reduced Padding */}
+<header className="text-center py-2 w-full relative">
+  <button onClick={() => setShowStats(true)} className="absolute left-4 top-4 text-xl">📊</button>
+  <div className="flex flex-col items-center justify-center">
+    <div className="flex items-center gap-2">
+      <div className="bg-green-600 text-white px-2 py-0.5 rounded flex items-center justify-center font-black shadow-sm text-lg leading-tight">SL</div>
+      <h1 className="text-2xl font-black tracking-tighter uppercase">Wordle</h1>
+    </div>
+    <p className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">v3.8 Stable</p>
+  </div>
+</header>
+
+{/* Grid - Reduced Gaps and Margins */}
+<div className="grid grid-rows-6 gap-1 mb-2">
+  {[...Array(6)].map((_, i) => (
+    <Row 
+      key={i} 
+      guess={i === guesses.length ? currentGuess : (guesses[i] || '')} 
+      isSubmitted={i < guesses.length} 
+      isRevealing={revealingRow === i}
+      solution={solution} 
+    />
+  ))}
+</div>
+
 
       <div className="flex items-center gap-3 mb-4">
         <div className="bg-gray-100 flex rounded-lg p-1">
-          <button onClick={() => setMode('daily')} className={`px-4 py-1 text-sm rounded-md font-bold ${mode === 'daily' ? 'bg-white shadow' : 'text-gray-400'}`}>Daily</button>
-          <button onClick={() => setMode('practice')} className={`px-4 py-1 text-sm rounded-md font-bold ${mode === 'practice' ? 'bg-white shadow' : 'text-gray-400'}`}>Practice</button>
+          <button onClick={() => setMode('daily')} className={`px-4 py-1 text-sm rounded-md font-bold transition ${mode === 'daily' ? 'bg-white shadow text-black' : 'text-gray-400'}`}>Daily</button>
+          <button onClick={() => setMode('practice')} className={`px-4 py-1 text-sm rounded-md font-bold transition ${mode === 'practice' ? 'bg-white shadow text-black' : 'text-gray-400'}`}>Practice</button>
         </div>
         <div className="font-mono text-sm font-bold bg-slate-800 text-white px-3 py-1 rounded-full">⏱️ {timer}s</div>
       </div>
@@ -217,25 +250,26 @@ export default function App() {
         <div className="fixed inset-0 bg-white/95 flex items-center justify-center p-6 z-50 overflow-y-auto">
           <div className="bg-white border-2 border-black p-6 rounded-2xl shadow-2xl text-center max-w-sm w-full my-auto relative">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black font-bold text-xl w-8 h-8 flex items-center justify-center">✕</button>
-            <h2 className="text-xl font-black mb-1 uppercase">{gameStatus === 'won' ? 'Victory' : 'Game Over'}</h2>
+            <h2 className="text-xl font-black mb-1 uppercase">{gameStatus === 'won' ? 'Victory' : (gameStatus === 'finished' ? 'Complete' : 'Game Over')}</h2>
             <p className="text-4xl font-black text-green-600 mb-4">{solution}</p>
             
             <div className="bg-blue-50 border-2 border-blue-100 rounded-xl p-4 mb-4 text-left">
-              <p className="text-[11px] font-bold text-blue-900 leading-tight mb-2">🤖 {analysis?.feedback}</p>
+            <p className="text-[11px] font-bold text-blue-900 leading-tight mb-2">✨ SL's Analysis: {analysis?.feedback}</p>
               <div className="flex justify-between text-[10px] font-black text-blue-400 uppercase">
+                <span>Daily #{getDailyId()}</span>
                 <span>Pace: {analysis?.pace}s/w</span>
-                <span>Mode: {mode}</span>
               </div>
             </div>
 
             <div className="text-xs italic text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg leading-relaxed">"{definition}"</div>
             
             <div className="flex flex-col gap-2">
-              <button onClick={shareResults} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Share Performance</button>
-              {mode === 'practice' ? (
-                <button onClick={() => setupGame('practice')} className="w-full bg-black text-white py-3 rounded-xl font-bold">New Practice</button>
-              ) : (
-                <button onClick={() => setShowModal(false)} className="w-full bg-gray-100 text-black py-3 rounded-xl font-bold">Review Board</button>
+              <button onClick={shareResults} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95 transition">Share Stats</button>
+              {mode === 'practice' && (
+                <button onClick={() => setupGame('practice')} className="w-full bg-black text-white py-3 rounded-xl font-bold active:scale-95 transition">Next Practice</button>
+              )}
+              {mode === 'daily' && (
+                <button onClick={() => setShowModal(false)} className="w-full bg-gray-200 text-black py-3 rounded-xl font-bold active:scale-95 transition">Back to Board</button>
               )}
             </div>
           </div>
@@ -267,7 +301,6 @@ export default function App() {
   );
 }
 
-// --- HELPERS ---
 function getRowColors(guess: string, solution: string) {
   const colors = Array(5).fill('grey');
   const solutionArr = solution.split('');
