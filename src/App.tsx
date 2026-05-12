@@ -2,12 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 // IMPORT THE DICTIONARY FROM THE JSON FILE
 import VALID_DICTIONARY from './data/dictionary.json';
 
-// Curated words that can be the answer (Add your favorite 465 here)
 const SOLUTION_WORDS: string[] = ["ABOUT", "ABOVE", "ADAPT", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN", "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIKE", "ALIVE", "ALLOW", "ALONE", "ALONG", "ALTER", "AMONG", "ANGER", "ANGLE", "ANGRY", "APART", "APPLE", "APPLY", "ARENA", "ARGUE", "ARISE", "ARRAY", "ASIDE", "ASSET", "AUDIO", "AUDIT", "AVOID", "AWARD", "AWARE", "AWFUL", "BASIC", "BASIS", "BEACH", "BEARD", "BEAST", "BEGIN", "BEING", "BELOW", "BENCH", "BIRTH", "BLACK", "BLADE", "BLAME", "BLAST", "BLEND", "BLOCK", "BLOOD", "BOARD", "BOOST", "BOOTH", "BOUND", "BRAIN", "BRAND", "BRASS", "BRAVE", "BREAD", "BREAK", "BREED", "BRIEF", "BRING", "BROAD", "BROKE", "BROWN", "BUILD", "BUILT", "BUYER", "CABLE", "CAMEL", "CANAL", "CANDY", "CANOE", "CARRY", "CATCH", "CAUSE", "CHAIN", "CHAIR", "CHART", "CHASE", "CHEAP", "CHECK", "CHEEK", "CHEST", "CHIEF", "CHILD", "CHINA", "CHOIR", "CHOSE", "CIVIL", "CLAIM", "CLASS", "CLEAN", "CLEAR", "CLICK", "CLOCK", "CLOSE", "CLOUD", "COACH", "COAST", "COLOR", "COUCH", "COULD", "COUNT", "COURT", "COVER", "CRACK", "CRAFT", "CRASH", "CRAWL", "CRAZY", "CREAM", "CREEK", "CRIME", "CROSS", "CROWD", "CROWN", "CRUDE", "CRUEL", "CRUSH", "CURVE", "CYCLE", "DAILY", "DANCE", "DEALT", "DEATH", "DELAY", "DELTA", "DENSE", "DEPTH", "DIARY", "DIGIT", "DIRTY", "DISCO", "DITCH", "DOUBT", "DOZEN", "DRAFT", "DRAIN", "DRAMA", "DREAD", "DREAM", "DRESS", "DRIFT", "DRILL", "DRINK", "DRIVE", "DROVE", "DYING", "EAGER", "EARLY", "EARTH", "EIGHT", "ELITE", "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY", "EQUAL", "ERROR", "ESSAY", "EVENT", "EVERY", "EXACT", "EXIST", "EXTRA", "FAITH", "FALSE", "FAULT", "FAVOR", "FEAST", "FIELD", "FIFTY", "FIGHT", "FINAL", "FIRST", "FLAME", "FLASH", "FLEET", "FLIGHT", "FLOOR", "FLUID", "FOCUS", "FORCE", "FORTH", "FORTY", "FORUM", "FOUND", "FRAME", "FRANK", "FRAUD", "FRESH", "FRONT", "FROST", "FRUIT", "FUNNY", "GHOST", "GIANT", "GIVEN", "GLASS", "GLOVE", "GOING", "GRACE", "GRADE", "GRAND", "GRANT", "GRAPH", "GRASP", "GRASS", "GREAT", "GREEN", "GREET", "GRIEF", "GRIND", "GROSS", "GROUP", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "HABIT", "HAPPY", "HARSH", "HEART", "HEAVY", "HELLO", "HENCE", "HONOR", "HORSE", "HOTEL", "HOUSE", "HUMAN", "IDEAL", "IMAGE", "INDEX", "INNER", "INPUT", "ISSUE", "JOINT", "JUDGE", "JUICE", "KNIFE", "KNOCK", "LABEL", "LABOR", "LARGE", "LASER", "LATER", "LAUGH", "LAYER", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL", "LEVEL", "LIGHT", "LIMIT", "LOCAL", "LOGIC", "LOOSE", "LOWER", "LUCKY", "LUNCH", "LYRIC", "MAGIC", "MAJOR", "MAKER", "MARCH", "MARRY", "MATCH", "MAYBE", "MAYOR", "MEDIA", "METAL", "METER", "MIGHT", "MINOR", "MINUS", "MODEL", "MODEM", "MOIST", "MONEY", "MONTH", "MORAL", "MOTOR", "MOUNT", "MOUSE", "MOUTH", "MOVIE", "MUSIC", "NAIVE", "NIGHT", "NOBLE", "NOISE", "NORTH", "NOTED", "NOVEL", "NURSE", "OCEAN", "OFFER", "OFTEN", "ORDER", "OTHER", "OUGHT", "OUTER", "OWNER", "PANEL", "PAPER", "PARTY", "PEACE", "PHASE", "PHONE", "PHOTO", "PIANO", "PIECE", "PILOT", "PITCH", "PIXEL", "PLACE", "PLAIN", "PLANE", "PLANT", "PLATE", "POINT", "POUND", "POWER", "PRESS", "PRICE", "PRIDE", "PRIME", "PRINT", "PRIOR", "PRIZE", "PROOF", "PROUD", "PROVE", "PROXY", "PULSE", "PUNCH", "QUERY", "QUEST", "QUEUE", "QUICK", "QUIET", "QUITE", "QUOTE", "RADIO", "RAISE", "RANGE", "RAPID", "RATIO", "REACH", "REACT", "READY", "REALM", "REBEL", "REFER", "RELAX", "REPLY", "RESET", "RESIN", "RETRO", "RIDER", "RIGHT", "RIVAL", "RIVER", "ROBOT", "ROCKY", "ROUGH", "ROUND", "ROUTE", "ROYAL", "RURAL", "SALAD", "SALES", "SAUCE", "SCALE", "SCENE", "SCOPE", "SCORE", "SCRAP", "SENSE", "SERVE", "SETUP", "SEVEN", "SHADE", "SHAFT", "SHAKE", "SHALL", "SHAME", "SHAPE", "SHARE", "SHARP", "SHEEP", "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRT", "SHOCK", "SHOOT", "SHORT", "SHOUT", "SHOWN", "SIGHT", "SINCE", "SIXTH", "SKILL", "SLEEP", "SLIDE", "SMALL", "SMART", "SMILE", "SMITH", "SMOKE", "SOLID", "SOLVE", "SORRY", "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEED", "SPEND", "SPICE", "SPIKE", "SPINE", "SPIRIT", "SPLIT", "SPOKE", "SPORT", "STAFF", "STAGE", "STAIR", "STAKE", "STAND", "STARE", "START", "STATE", "STEAK", "STEAL", "STEAM", "STEEL", "STEEP", "STEER", "STICK", "STIFF", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM", "STORY", "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUPER", "SWEET", "SWIFT", "SWING", "TABLE", "TAKEN", "TALLY", "TASTE", "TAXES", "TEACH", "TEETH", "TERMS", "THANK", "THEFT", "THEIR", "THEME", "THERE", "THESE", "THICK", "THING", "THINK", "THIRD", "THOSE", "THREE", "THREW", "THROW", "TIGHT", "TIMES", "TIRED", "TITLE", "TODAY", "TOKEN", "TOPIC", "TOTAL", "TOUCH", "TOUGH", "TOWER", "TRACK", "TRADE", "TRAIL", "TRAIN", "TREAD", "TREAT", "TREND", "TRIAL", "TRIBE", "TRICK", "TRIED", "TRUCK", "TRULY", "TRUST", "TRUTH", "TWICE", "UNCLE", "UNDER", "UNION", "UNITE", "UNITY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USUAL", "VALID", "VALUE", "VIDEO", "VIRUS", "VISIT", "VITAL", "VOICE", "WASTE", "WATCH", "WATER", "WHEEL", "WHERE", "WHICH", "WHILE", "WHITE", "WHOLE", "WHOSE", "WOMAN", "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WOUND", "WRITE", "WRONG", "YOUTH", "ZEBRA"];
 
 const MAX_GUESSES = 6;
-
-// Optimize lookup speed with a Set
 const DICTIONARY_SET = new Set([...SOLUTION_WORDS, ...VALID_DICTIONARY]);
 
 interface UserStats {
@@ -32,10 +29,11 @@ export default function App() {
   const [stats, setStats] = useState<UserStats>({ gamesPlayed: 0, gamesWon: 0, totalTime: 0, currentStreak: 0 });
   const [revealingRow, setRevealingRow] = useState<number | null>(null);
 
-  useEffect(() => {
-    const savedStats = localStorage.getItem('sl-wordle-stats');
-    if (savedStats) setStats(JSON.parse(savedStats));
-  }, []);
+  // --- UTILITIES ---
+  const showMessage = (msg: string) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(''), 2000);
+  };
 
   const updateStats = (won: boolean, time: number) => {
     const newStats = {
@@ -93,6 +91,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const savedStats = localStorage.getItem('sl-wordle-stats');
+    if (savedStats) setStats(JSON.parse(savedStats));
     setupGame(mode);
   }, [mode, setupGame]);
 
@@ -123,7 +123,6 @@ export default function App() {
 
       setRevealingRow(guesses.length);
       
-      // Delay state update for animation
       setTimeout(() => {
         const newGuesses = [...guesses, word];
         setGuesses(newGuesses);
@@ -155,7 +154,7 @@ export default function App() {
       const rowColors = getRowColors(g, solution);
       return rowColors.map(c => c === 'green' ? '🟩' : c === 'yellow' ? '🟨' : '⬛').join('');
     }).join('\n');
-    const text = `SL Wordle v3.8\nTime: ${timer}s\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
+    const text = `SL Wordle v3.7\nTime: ${timer}s\nScore: ${guesses.length}/${MAX_GUESSES}\n\n${emojiGrid}`;
     navigator.clipboard.writeText(text);
     showMessage("Copied to clipboard!");
   };
@@ -163,12 +162,10 @@ export default function App() {
   const analysis = useMemo(() => {
     if (gameStatus === 'playing' || guesses.length === 0) return null;
     const pace = timer / guesses.length;
-    let feedback = "Systematic play! You're narrowing down patterns like a pro.";
+    let feedback = "Systematic play! You're narrowing down patterns.";
     if (gameStatus === 'won') {
-      if (guesses.length <= 2) feedback = "Absolute genius! This solve was pure intuition.";
-      else if (pace < 12) feedback = "Blazing fast reflexes. Your brain processes letters at high speed.";
-    } else {
-      feedback = "Tough luck. Even top bots find these patterns tricky.";
+      if (guesses.length <= 2) feedback = "Absolute genius!";
+      else if (pace < 12) feedback = "Blazing fast reflexes.";
     }
     return { feedback, pace: pace.toFixed(1) };
   }, [gameStatus, guesses, timer]);
@@ -190,13 +187,12 @@ export default function App() {
           <div className="bg-green-600 text-white px-2 py-1 rounded flex items-center justify-center font-black shadow-sm text-lg leading-tight">SL</div>
           <h1 className="text-3xl font-black tracking-tighter">WORDLE</h1>
         </div>
-        <p className="text-[11px] mt-1 text-blue-600 font-bold uppercase tracking-widest">Version 3.8</p>
       </header>
 
       <div className="flex items-center gap-3 mb-4">
         <div className="bg-gray-100 flex rounded-lg p-1">
-          <button onClick={() => setMode('daily')} className={`px-4 py-1 text-sm rounded-md font-bold transition ${mode === 'daily' ? 'bg-white shadow text-black' : 'text-gray-400'}`}>Daily</button>
-          <button onClick={() => setMode('practice')} className={`px-4 py-1 text-sm rounded-md font-bold transition ${mode === 'practice' ? 'bg-white shadow text-black' : 'text-gray-400'}`}>Practice</button>
+          <button onClick={() => setMode('daily')} className={`px-4 py-1 text-sm rounded-md font-bold ${mode === 'daily' ? 'bg-white shadow' : 'text-gray-400'}`}>Daily</button>
+          <button onClick={() => setMode('practice')} className={`px-4 py-1 text-sm rounded-md font-bold ${mode === 'practice' ? 'bg-white shadow' : 'text-gray-400'}`}>Practice</button>
         </div>
         <div className="font-mono text-sm font-bold bg-slate-800 text-white px-3 py-1 rounded-full">⏱️ {timer}s</div>
       </div>
@@ -220,32 +216,26 @@ export default function App() {
       {showModal && (
         <div className="fixed inset-0 bg-white/95 flex items-center justify-center p-6 z-50 overflow-y-auto">
           <div className="bg-white border-2 border-black p-6 rounded-2xl shadow-2xl text-center max-w-sm w-full my-auto relative">
-            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black font-bold text-xl">✕</button>
-            <h2 className="text-xl font-black mb-1">{gameStatus === 'won' ? 'VICTORY' : 'GAME OVER'}</h2>
+            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-black font-bold text-xl w-8 h-8 flex items-center justify-center">✕</button>
+            <h2 className="text-xl font-black mb-1 uppercase">{gameStatus === 'won' ? 'Victory' : 'Game Over'}</h2>
             <p className="text-4xl font-black text-green-600 mb-4">{solution}</p>
             
             <div className="bg-blue-50 border-2 border-blue-100 rounded-xl p-4 mb-4 text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🤖</span>
-                <span className="font-black text-xs uppercase tracking-tighter text-blue-800">Bot Analysis</span>
-              </div>
-              <p className="text-[11px] font-bold text-blue-900 leading-tight mb-2">{analysis?.feedback}</p>
+              <p className="text-[11px] font-bold text-blue-900 leading-tight mb-2">🤖 {analysis?.feedback}</p>
               <div className="flex justify-between text-[10px] font-black text-blue-400 uppercase">
-                <span>Pace: {analysis?.pace}s / word</span>
-                <span>Efficiency: {gameStatus === 'won' ? 'High' : 'Moderate'}</span>
+                <span>Pace: {analysis?.pace}s/w</span>
+                <span>Mode: {mode}</span>
               </div>
             </div>
 
-            <div className="text-xs italic text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg leading-relaxed">
-              "{definition || 'No definition found.'}"
-            </div>
+            <div className="text-xs italic text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg leading-relaxed">"{definition}"</div>
             
             <div className="flex flex-col gap-2">
-              <button onClick={shareResults} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95 transition">Share Performance</button>
+              <button onClick={shareResults} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Share Performance</button>
               {mode === 'practice' ? (
-                <button onClick={() => setupGame('practice')} className="w-full bg-black text-white py-3 rounded-xl font-bold active:scale-95 transition">New Practice</button>
+                <button onClick={() => setupGame('practice')} className="w-full bg-black text-white py-3 rounded-xl font-bold">New Practice</button>
               ) : (
-                <button onClick={() => setShowModal(false)} className="w-full bg-gray-100 text-black py-3 rounded-xl font-bold active:scale-95 transition">Review Board</button>
+                <button onClick={() => setShowModal(false)} className="w-full bg-gray-100 text-black py-3 rounded-xl font-bold">Review Board</button>
               )}
             </div>
           </div>
@@ -260,11 +250,11 @@ export default function App() {
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-gray-100 p-4 rounded-2xl">
                 <p className="text-2xl font-black">{stats.gamesPlayed}</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Played</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Played</p>
               </div>
               <div className="bg-gray-100 p-4 rounded-2xl">
                 <p className="text-2xl font-black">{stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0}%</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Win Rate</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Win %</p>
               </div>
             </div>
             <button onClick={() => setShowStats(false)} className="w-full bg-black text-white py-4 rounded-2xl font-bold">Back to Game</button>
@@ -277,12 +267,11 @@ export default function App() {
   );
 }
 
-// Internal Helper Functions
+// --- HELPERS ---
 function getRowColors(guess: string, solution: string) {
   const colors = Array(5).fill('grey');
   const solutionArr = solution.split('');
   const guessArr = guess.split('');
-
   guessArr.forEach((char, i) => {
     if (char === solutionArr[i]) {
       colors[i] = 'green';
@@ -290,7 +279,6 @@ function getRowColors(guess: string, solution: string) {
       guessArr[i] = ''; 
     }
   });
-
   guessArr.forEach((char, i) => {
     if (char !== '' && solutionArr.includes(char)) {
       colors[i] = 'yellow';
@@ -303,23 +291,18 @@ function getRowColors(guess: string, solution: string) {
 function Row({ guess, isSubmitted, isRevealing, solution }: any) {
   const letters = guess.padEnd(5, ' ').split('');
   const colors = (isSubmitted || isRevealing) ? getRowColors(guess, solution) : Array(5).fill('');
-
   return (
     <div className="flex gap-1.5">
-      {letters.map((char, i) => {
+      {letters.map((char: string, i: number) => {
         let style = "border-gray-300";
         if (isSubmitted || isRevealing) {
           if (colors[i] === 'green') style = "bg-green-600 border-green-600 text-white";
           else if (colors[i] === 'yellow') style = "bg-yellow-500 border-yellow-500 text-white";
           else style = "bg-gray-500 border-gray-500 text-white";
         } else if (char !== ' ') style = "border-gray-600 scale-105";
-
         return (
-          <div 
-            key={i} 
-            style={{ transitionDelay: isRevealing ? `${i * 300}ms` : '0ms' }}
-            className={`w-12 h-12 sm:w-14 sm:h-14 border-2 flex items-center justify-center text-2xl font-black transition-all duration-500 ${style} ${isRevealing ? 'rotate-X-180' : ''}`}
-          >
+          <div key={i} style={{ transitionDelay: isRevealing ? `${i * 300}ms` : '0ms' }}
+            className={`w-12 h-12 sm:w-14 sm:h-14 border-2 flex items-center justify-center text-2xl font-black transition-all duration-500 ${style}`}>
             {char.trim()}
           </div>
         );
@@ -334,13 +317,12 @@ function Keyboard({ guesses, solution, onKey }: any) {
     ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
     ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK']
   ];
-
   const getKeyStyle = (key: string) => {
     if (key.length > 1) return 'bg-gray-200 text-black';
     let status = 'bg-gray-200 text-black';
-    guesses.forEach(g => {
+    guesses.forEach((g: string) => {
       const colors = getRowColors(g, solution);
-      g.split('').forEach((char, i) => {
+      g.split('').forEach((char: string, i: number) => {
         if (char === key) {
           if (colors[i] === 'green') status = 'bg-green-600 text-white';
           else if (colors[i] === 'yellow' && status !== 'bg-green-600 text-white') status = 'bg-yellow-500 text-white';
@@ -350,15 +332,13 @@ function Keyboard({ guesses, solution, onKey }: any) {
     });
     return status;
   };
-
   return (
     <div className="px-1">
       {rows.map((row, i) => (
         <div key={i} className="flex justify-center gap-1 mb-2">
           {row.map(key => (
             <button key={key} onClick={() => onKey(key === 'BACK' ? 'BACKSPACE' : key)}
-              className={`${getKeyStyle(key)} ${key.length > 1 ? 'px-2 text-[10px]' : 'flex-1'} h-14 rounded-md font-bold active:scale-90 transition-transform touch-manipulation`}
-            >
+              className={`${getKeyStyle(key)} ${key.length > 1 ? 'px-2 text-[10px]' : 'flex-1'} h-14 rounded-md font-bold active:scale-90 transition-transform touch-manipulation`}>
               {key === 'BACK' ? '⌫' : key}
             </button>
           ))}
