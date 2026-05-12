@@ -208,19 +208,6 @@ export default function App() {
   </div>
 </header>
 
-{/* Grid - Reduced Gaps and Margins */}
-<div className="grid grid-rows-6 gap-1 mb-2">
-  {[...Array(6)].map((_, i) => (
-    <Row 
-      key={i} 
-      guess={i === guesses.length ? currentGuess : (guesses[i] || '')} 
-      isSubmitted={i < guesses.length} 
-      isRevealing={revealingRow === i}
-      solution={solution} 
-    />
-  ))}
-</div>
-
 
       <div className="flex items-center gap-3 mb-4">
         <div className="bg-gray-100 flex rounded-lg p-1">
